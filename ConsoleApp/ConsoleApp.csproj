@@ -1,0 +1,17 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>ConsoleApp</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\DataAccessLayer\DataAccessLayer.csproj" />
+    <ProjectReference Include="..\LogicLib\LogicLib.csproj" />
+    <ProjectReference Include="..\Web-Api\Web-Api.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Reference Include="SAPbobsCOM">
+      <HintPath>..\DataAccessLayer\Interop.SAPbobsCOM.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+</Project>

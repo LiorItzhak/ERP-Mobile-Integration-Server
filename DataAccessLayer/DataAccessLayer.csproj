@@ -1,0 +1,36 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <RootNamespace>DataAccessLayer</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Innofactor.EfCoreJsonValueConverter" Version="2.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="3.1.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore" Version="3.1.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="3.1.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="3.1.1" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="3.1.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+  </ItemGroup>
+
+<ItemGroup>
+  <Reference Include="SAPbobsCOM">
+    <HintPath>..\DataAccessLayer\Interop.SAPbobsCOM.dll</HintPath>
+  </Reference>
+  <Reference Include="SAPbouiCOM">
+    <HintPath>..\DataAccessLayer\Interop.SAPbouiCOM.dll</HintPath>
+  </Reference>
+</ItemGroup>
+
+<ItemGroup>
+  
+  <ProjectReference Include="..\CrossLayersUtils\CrossLayersUtils.csproj" />
+</ItemGroup>
+
+<ItemGroup>
+  <Folder Include="Migrations" />
+</ItemGroup>
+
+</Project>

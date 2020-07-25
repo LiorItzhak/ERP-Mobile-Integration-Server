@@ -1,0 +1,24 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <RootNamespace>ConsoleApp1</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\CrossLayersUtils\CrossLayersUtils.csproj" />
+      <ProjectReference Include="..\DataAccessLayer\DataAccessLayer.csproj" />
+      <ProjectReference Include="..\LogicLib\LogicLib.csproj" />
+      <ProjectReference Include="..\Web-Api\Web-Api.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <Reference Include="SAPbobsCOM">
+            <HintPath>..\DataAccessLayer\Interop.SAPbobsCOM.dll</HintPath>
+        </Reference>
+        <Reference Include="SAPbouiCOM">
+            <HintPath>..\DataAccessLayer\Interop.SAPbouiCOM.dll</HintPath>
+        </Reference>
+    </ItemGroup>
+</Project>
