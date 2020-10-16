@@ -34,7 +34,7 @@ namespace LogicLib.Services.Impl
             using var transaction = _dalService.CreateUnitOfWork();
             return await transaction.UserLocations.FindAllAsync(
                 x => (!employeeSn.HasValue || x.EmployeeSn == employeeSn)
-                     && x.DateTime >= fromDateTime && (!toDateTime.HasValue || toDateTime.Value <= toDateTime),
+                     && x.DateTime >= fromDateTime && (!toDateTime.HasValue || x.DateTime < toDateTime.Value ),
                 PageRequest.Of(page, size, Sort<UserLocation>.By(x => x.DateTime)));
         }
 

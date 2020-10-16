@@ -12,6 +12,7 @@ using DataAccessLayer.SAPHandler.DiApiHandler;
 using DataAccessLayer.SAPHandler.SqlHandler.DbContexts;
 using DataAccessLayer.SAPHandler.SqlHandler.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Internal;
 using Activity = DataAccessLayer.Entities.BusinessPartners.Activity;
 
 namespace DataAccessLayer.Repositories.Impls.SAP
@@ -56,7 +57,7 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                 _lastSync = DateTime.Now;
                 var extraDbContext = new RalDbContext(options.ExtrasServerOptions);
                 var dbActivities = extraDbContext.Activities.ToList();
-                var uncanged = 0;
+                var unchanged = 0;
                 var cachedActivitiesValues = _cachedActivities.Values;
                 foreach (var cachedActivity in cachedActivitiesValues)
                 {
@@ -71,16 +72,29 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                         // temp = extraDbContext.Activities.Update(cachedActivity);
                     }
                     else
-                        uncanged++;
+                        unchanged++;
                 }
 
-                if (uncanged != cachedActivitiesValues.Count)
+                if (unchanged != cachedActivitiesValues.Count)
                     extraDbContext.SaveChanges();
             });
         }
 
+        private class ActContainer
+        {
+            public OHEM Ohem { get; set; }
+            public OCLG Oclg { get; set; }
+        }
+
         private static IQueryable<Activity> SelectActivitiesFromDb(SapSqlDbContext dbContext) =>
-            dbContext.OCLG.Select(AsActivity);
+            (from oclg in dbContext.OCLG
+                join ohem in dbContext.OHEM on oclg.AttendUser equals ohem.userId into gj
+                from sub in gj.DefaultIfEmpty()
+                select new ActContainer
+                {
+                    Oclg = oclg,
+                    Ohem = sub
+                }).Select(AsActivity);
 
 
         public async Task<IEnumerable<ActivityType>> GetAllActivityTypes()
@@ -132,22 +146,41 @@ namespace DataAccessLayer.Repositories.Impls.SAP
 
         public new async Task<Activity> AddAsync(Activity entity)
         {
-            return await base.AddAsync(entity).MergeCacheAsync(_cachedActivities);
+            var tmpHandleBy = entity.HandleByEmployeeCode;
+            entity.HandleByEmployeeCode = await HandleByUserOrEmployee(entity);
+            var o = await base.AddAsync(entity);
+            if (o.HandleByEmployeeCode == 0) //return 0 if handle by user
+                o.HandleByEmployeeCode = tmpHandleBy; //set to tha matching employee
+            return o.MergeCache(_cachedActivities);
         }
 
         public new async Task<List<Activity>> AddAsync(List<Activity> entities)
         {
-            return await base.AddAsync(entities).MergeCacheAsync(_cachedActivities);
+            var tmps = entities.Select(x => x.HandleByEmployeeCode);
+            var o = await base.AddAsync(entities).MergeCacheAsync(_cachedActivities);
+            return  o.Zip(tmps).Select(x =>
+            {
+                if (x.First.HandleByEmployeeCode == 0)
+                    x.First.HandleByEmployeeCode = x.Second;
+                return x.First;
+            }).ToList();
         }
+
 
         public new async Task<Activity> UpdateAsync(Activity entity)
         {
-            return await base.UpdateAsync(entity).MergeCacheAsync(_cachedActivities);
+            var tmpHandleBy = entity.HandleByEmployeeCode;
+            entity.HandleByEmployeeCode = await HandleByUserOrEmployee(entity);
+            var o = await base.UpdateAsync(entity);
+            if (o.HandleByEmployeeCode == 0) //return 0 if handle by user
+                o.HandleByEmployeeCode = tmpHandleBy; //set to tha matching employee
+            return o.MergeCache(_cachedActivities);
         }
 
-        public new async Task<List<Activity>> UpdateAsync(List<Activity> entities)
+        public new   Task<List<Activity>> UpdateAsync(List<Activity> entities)
         {
-            return await base.UpdateAsync(entities).MergeCacheAsync(_cachedActivities);
+            return Task.Run(() => entities.Select(x => UpdateAsync(x).Result).ToList());
+
         }
 
 
@@ -167,75 +200,88 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                 IsActive = x.Active == "Y"
             };
 
-        private static readonly Expression<Func<OCLG, Activity>> AsActivity =
-            x => new Activity
+        private static readonly Expression<Func<ActContainer, Activity>> AsActivity =
+            (x) => new Activity
             {
-                Code = x.ClgCode,
-                BusinessPartnerCode = x.CardCode,
-                HandleByEmployeeCode = x.AttendEmpl,
+                Code = x.Oclg.ClgCode,
+                BusinessPartnerCode = x.Oclg.CardCode,
+                HandleByEmployeeCode = x.Ohem == null ? x.Oclg.AttendEmpl : x.Ohem.empID,
                 // ReSharper disable once ConvertConditionalTernaryExpressionToSwitchExpression
-                Action = x.Action == "C" ? Activity.ActionType.PhoneCall :
-                    x.Action == "M" ? Activity.ActionType.Meeting :
-                    x.Action == "T" ? Activity.ActionType.Task :
-                    x.Action == "E" ? Activity.ActionType.Note :
-                    x.Action == "P" ? Activity.ActionType.Campaign : Activity.ActionType.Other,
-                TypeCode = x.CntctType.Value,
-                SubjectCode = x.CntctSbjct.Value == -1 ? null as int? : x.CntctSbjct.Value,
-                Details = x.Details,
-                Notes = x.Notes,
-                BeginDateTime = x.BeginTime.HasValue && x.Recontact.HasValue
-                    ? x.Recontact.Value
-                        .AddMinutes(x.BeginTime.Value % 100)
+                Action = x.Oclg.Action == "C" ? Activity.ActionType.PhoneCall :
+                    x.Oclg.Action == "M" ? Activity.ActionType.Meeting :
+                    x.Oclg.Action == "T" ? Activity.ActionType.Task :
+                    x.Oclg.Action == "E" ? Activity.ActionType.Note :
+                    x.Oclg.Action == "P" ? Activity.ActionType.Campaign : Activity.ActionType.Other,
+                TypeCode = x.Oclg.CntctType.Value,
+                SubjectCode = x.Oclg.CntctSbjct.Value == -1 ? null as int? : x.Oclg.CntctSbjct.Value,
+                Details = x.Oclg.Details,
+                Notes = x.Oclg.Notes,
+                BeginDateTime = x.Oclg.BeginTime.HasValue && x.Oclg.Recontact.HasValue
+                    ? x.Oclg.Recontact.Value
+                        .AddMinutes(x.Oclg.BeginTime.Value % 100)
                         // ReSharper disable once PossibleLossOfFraction
-                        .AddHours(x.BeginTime.Value / 100)
-                    : x.Recontact.Value,
+                        .AddHours(x.Oclg.BeginTime.Value / 100)
+                    : x.Oclg.Recontact.Value,
 
-                DurationMinutes = x.DurType == "D" ? Convert.ToInt32(x.Duration.Value * 60 * 24) :
-                    x.DurType == "H" ? Convert.ToInt32(x.Duration.Value * 60) : Convert.ToInt32(x.Duration.Value),
+                DurationMinutes = x.Oclg.DurType == "D" ? Convert.ToInt32(x.Oclg.Duration.Value * 60 * 24) :
+                    x.Oclg.DurType == "H" ? Convert.ToInt32(x.Oclg.Duration.Value * 60) :
+                    Convert.ToInt32(x.Oclg.Duration.Value),
 
-                CreationDateTime = x.CntctTime.HasValue && x.CntctDate.HasValue
-                    ? x.CntctDate.Value
-                        .AddMinutes(x.CntctTime.Value % 100)
+                CreationDateTime = x.Oclg.CntctTime.HasValue && x.Oclg.CntctDate.HasValue
+                    ? x.Oclg.CntctDate.Value
+                        .AddMinutes(x.Oclg.CntctTime.Value % 100)
                         // ReSharper disable once PossibleLossOfFraction
-                        .AddHours(x.CntctTime.Value / 100)
-                    : x.CntctDate,
+                        .AddHours(x.Oclg.CntctTime.Value / 100)
+                    : x.Oclg.CntctDate,
 
-                CloseDate = x.CloseDate,
-                IsClosed = x.Closed == "Y",
-                IsActive = x.inactive == "N",
-                Document = x.DocEntry == null || Convert.ToInt64(x.DocEntry) == 0
+                CloseDate = x.Oclg.CloseDate,
+                IsClosed = x.Oclg.Closed == "Y",
+                IsActive = x.Oclg.inactive == "N",
+                Document = x.Oclg.DocEntry == null || Convert.ToInt64(x.Oclg.DocEntry) == 0
                     ? null
                     : new DocReferencedEntity
                     {
-                        DocKey = Convert.ToInt64(x.DocEntry),
+                        DocKey = Convert.ToInt64(x.Oclg.DocEntry),
                         // ReSharper disable once ConvertConditionalTernaryExpressionToSwitchExpression
-                        DocType = x.DocType == "13" ? DocType.Invoice :
-                            x.DocType == "17" ? DocType.Order :
-                            x.DocType == "23" ? DocType.Quotation :
-                            x.DocType == "14" ? DocType.CreditNote :
-                            x.DocType == "15" ? DocType.DeliveryNote :
-                            x.DocType == "203" ? DocType.DownPaymentRequest :
-                            x.DocType == "24" ? DocType.Receipt : DocType.Other
+                        DocType = x.Oclg.DocType == "13" ? DocType.Invoice :
+                            x.Oclg.DocType == "17" ? DocType.Order :
+                            x.Oclg.DocType == "23" ? DocType.Quotation :
+                            x.Oclg.DocType == "14" ? DocType.CreditNote :
+                            x.Oclg.DocType == "15" ? DocType.DeliveryNote :
+                            x.Oclg.DocType == "203" ? DocType.DownPaymentRequest :
+                            x.Oclg.DocType == "24" ? DocType.Receipt : DocType.Other
                     },
-                LastModifiedDateTime = x.CloseDate.HasValue ? x.CloseDate.Value.AddDays(1) : new DateTime?(),
-                BaseActivity = x.prevActvty
+                LastModifiedDateTime = x.Oclg.CloseDate.HasValue ? x.Oclg.CloseDate.Value.AddDays(1) : new DateTime?(),
+                BaseActivity = x.Oclg.prevActvty
             };
+
+        private async Task<int?> HandleByUserOrEmployee(Activity activity)
+        {
+            if (!activity.HandleByEmployeeCode.HasValue) return activity.HandleByEmployeeCode;          
+           
+            // mark user id (and not emp id ) by a negative value
+            var emp = await _context.OHEM.FirstAsync(x => x.empID == activity.HandleByEmployeeCode.Value);
+            if (emp.userId.HasValue)
+                return -emp.userId;
+
+            return activity.HandleByEmployeeCode;
+        }
     }
 
     internal static class ActivitiesExtenstion
     {
-        public static IEnumerable<Activity> MergeCache(this IEnumerable<Activity> activities,
+        public static List<Activity> MergeCache(this IEnumerable<Activity> activities,
             Dictionary<int, Activity> cachedActivities) => activities
-            .Select(a => a.MergeCache(cachedActivities));
+            .Select(a => a.MergeCache(cachedActivities)).ToList();
 
 
         public static async Task<List<Activity>> MergeCacheAsync(this Task<List<Activity>> activities,
-            Dictionary<int, Activity> cachedActivities) => (await activities).MergeCache(cachedActivities).ToList();
+            Dictionary<int, Activity> cachedActivities) => (await activities).MergeCache(cachedActivities);
 
         public static async Task<Activity> MergeCacheAsync(this Task<Activity> a,
             Dictionary<int, Activity> cachedActivities) => (await a).MergeCache(cachedActivities);
 
-        private static Activity MergeCache(this Activity a,
+        public static Activity MergeCache(this Activity a,
             Dictionary<int, Activity> cachedActivities)
         {
             Debug.Assert(a.Code != null, "a.Code != null");

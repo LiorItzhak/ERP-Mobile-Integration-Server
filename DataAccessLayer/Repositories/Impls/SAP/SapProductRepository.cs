@@ -7,7 +7,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
 using System.Threading.Tasks;
 using DataAccessLayer.SAPHandler.SqlHandler.DbContexts;
 
@@ -27,39 +26,23 @@ namespace DataAccessLayer.Repositories.Impls.SAP
         }
 
 
-        public async Task<IEnumerable<ProductEntity>> GetAllActiveItemsForeSellAsync(int page, int size)
+        protected override ProductEntity DoAfterFetch(ProductEntity product)
         {
-            var products =
-                await SelectItems(_dbContext)
-                    .Where(i => i.IsActive && i.IsForSell)
-                    .Skip(page * size)
-                    .Take(size)
-                    .ToListAsync();
-            await GetSapProprieties(products);
-            await GetPriceList(products);
-            return products.getMockProperties();
+            GetSapProperties(product).Wait();
+            ApplyPriceList(product).Wait();
+            return product.GetMockProperties();
         }
 
         private static IQueryable<ProductEntity> SelectItems(SapSqlDbContext dbContext)
         {
             return dbContext.OITM.Select(AsItemEntity);
         }
-
-        private async Task<IEnumerable<ProductEntity>> GetSapProprieties(IEnumerable<ProductEntity> products)
+        
+        private async Task<ProductEntity> GetSapProperties(ProductEntity product)
         {
-            var productEntities = products as ProductEntity[] ?? products.ToArray();
-            var codeList = productEntities.Select(x => x.Code);
-            var temp = (await _dbContext.OITM
-                .Where(x => codeList.Contains(x.ItemCode))
-                .Select(SelectSapProperties)
-                .ToArrayAsync());
-
-            productEntities.ToList().ForEach(x =>
-            {
-                var p = temp.First(i => i.ProductCode == x.Code);
-                GetSapProperties(x, p);
-            });
-            return productEntities;
+            var x = await _dbContext.OITM.Where(i => product.Code == i.ItemCode)
+                .Select(SelectSapProperties).FirstOrDefaultAsync();
+            return GetSapProperties(product, x);
         }
 
         private static ProductEntity GetSapProperties(ProductEntity product, TempEntity x)
@@ -106,14 +89,6 @@ namespace DataAccessLayer.Repositories.Impls.SAP
             return product;
         }
 
-        private async Task<ProductEntity> GetSapPropreties(ProductEntity product)
-        {
-            var x = await _dbContext.OITM.Where(i => product.Code == i.ItemCode)
-                .Select(SelectSapProperties).FirstOrDefaultAsync();
-
-            return GetSapProperties(product, x);
-        }
-
 
         protected static readonly Expression<Func<OITM, TempEntity>> SelectSapProperties =
             x => new TempEntity
@@ -129,47 +104,37 @@ namespace DataAccessLayer.Repositories.Impls.SAP
             {
                 Code = x.ItemCode,
                 GroupCode = Convert.ToInt16(x.ItmsGrpCod),
-                Name = x.ItemName??"",
+                Name = x.ItemName ?? "",
                 NameForeign = x.FrgnName,
                 Barcode = x.CodeBars,
                 IsActive = x.validFor == "Y" && x.Canceled != "Y",
                 IsForBuy = x.PrchseItem == "Y",
                 IsForSell = x.SellItem == "Y",
-                CreationDateTime = x.CreateTS.HasValue && x.CreateDate.HasValue ? x.CreateDate.Value
-                    .AddSeconds( x.CreateTS.Value % 100)
-                    .AddMinutes(( x.CreateTS.Value / 100) % 100)
-                    .AddHours(( x.CreateTS.Value / 10000) % 10000) : x.CreateDate,
-                
-                LastUpdateDateTime = x.UpdateTS.HasValue && x.UpdateDate.HasValue ? x.UpdateDate.Value
-                    .AddSeconds( x.UpdateTS.Value % 100)
-                    .AddMinutes(( x.UpdateTS.Value / 100) % 100)
-                    .AddHours(( x.UpdateTS.Value / 10000) % 10000) : x.UpdateDate,
-                
-   
+                CreationDateTime = x.CreateTS.HasValue && x.CreateDate.HasValue
+                    ? x.CreateDate.Value
+                        .AddSeconds(x.CreateTS.Value % 100)
+                        .AddMinutes((x.CreateTS.Value / 100) % 100)
+                        .AddHours((x.CreateTS.Value / 10000) % 10000)
+                    : x.CreateDate,
+
+                LastUpdateDateTime = x.UpdateTS.HasValue && x.UpdateDate.HasValue
+                    ? x.UpdateDate.Value
+                        .AddSeconds(x.UpdateTS.Value % 100)
+                        .AddMinutes((x.UpdateTS.Value / 100) % 100)
+                        .AddHours((x.UpdateTS.Value / 10000) % 10000)
+                    : x.UpdateDate,
+
+
                 PictureUrl = x.PicturName,
                 Description = x.UserText
             };
 
-
-        private async Task GetPriceList(IEnumerable<ProductEntity> products)
-        {
-            var productsCodes = products.Select(x => x.Code);
-            var pDic = products.ToDictionary(x => x.Code, x => x);
-            var itm1 = await _dbContext.ITM1.Where(x => productsCodes.Contains(x.ItemCode)).ToListAsync();
-
-            itm1.ToList().ForEach(x =>
-            {
-                var product = pDic[x.ItemCode];
-                applayPriceList(product, x);
-            });
-        }
-
-        private static void applayPriceList(ProductEntity product, ITM1 x)
+        
+        private static void ApplyPriceList(ProductEntity product, ITM1 x)
         {
             if (x.PriceList == 2) //SELL PRICE LIST
             {
-                if (product.SellPriceList == null)
-                    product.SellPriceList = new Dictionary<string, decimal>();
+                product.SellPriceList ??= new Dictionary<string, decimal>();
                 if (!string.IsNullOrEmpty(x.Currency))
                     product.SellPriceList.Add(x.Currency, x.Price.Value);
                 if (!string.IsNullOrEmpty(x.Currency1))
@@ -179,8 +144,7 @@ namespace DataAccessLayer.Repositories.Impls.SAP
             }
             else //BUY PRICE LIST
             {
-                if (product.BuyPriceList == null)
-                    product.BuyPriceList = new Dictionary<string, decimal>();
+                product.BuyPriceList ??= new Dictionary<string, decimal>();
                 if (!string.IsNullOrEmpty(x.Currency))
                     product.BuyPriceList.Add(x.Currency, x.Price.Value);
                 if (!string.IsNullOrEmpty(x.Currency1))
@@ -190,18 +154,12 @@ namespace DataAccessLayer.Repositories.Impls.SAP
             }
         }
 
-        private async Task getPriceList(ProductEntity product)
+        private async Task ApplyPriceList(ProductEntity product)
         {
             var x = await _dbContext.ITM1.Where(i => i.ItemCode == product.Code).FirstOrDefaultAsync();
-
-            applayPriceList(product, x);
+            ApplyPriceList(product, x);
         }
-
-        protected class TempPriceList
-        {
-            public string ProductCode { get; set; }
-        }
-
+        
         protected class TempEntity
         {
             public string ProductCode { get; set; }
@@ -211,16 +169,17 @@ namespace DataAccessLayer.Repositories.Impls.SAP
         }
     }
 
-    static class MockProperties
+    internal static class MockProperties
     {
-        public static IEnumerable<ProductEntity> getMockProperties(this IEnumerable<ProductEntity> productEntities)
+        public static IEnumerable<ProductEntity> GetMockProperties(this IEnumerable<ProductEntity> productEntities)
         {
-            productEntities.ToList().ForEach(x => x.getMockProperties());
-            return productEntities;
+            var mockProperties = productEntities as ProductEntity[] ?? productEntities.ToArray();
+            mockProperties.ToList().ForEach(x => x.GetMockProperties());
+            return mockProperties;
         }
 
 
-        private static ProductEntity getMockProperties(this ProductEntity productEntity)
+        public static ProductEntity GetMockProperties(this ProductEntity productEntity)
         {
             if (productEntity.Properties != null && productEntity.Properties.Count > 0)
                 productEntity.Properties
@@ -229,7 +188,7 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                         Code = "units", Type = ProductPropertyEntity.PropertyType.Int, MinValue = 0, DefaultValue = 1
                     });
             else
-                productEntity.Properties = mockProductPropertyEntites;
+                productEntity.Properties = MockProductPropertyEntities;
 
             var calString = "";
             productEntity.Properties.ForEach(x => calString += x.Code + "*");
@@ -239,21 +198,22 @@ namespace DataAccessLayer.Repositories.Impls.SAP
             return productEntity;
         }
 
-        private static List<ProductPropertyEntity> mockProductPropertyEntites = new List<ProductPropertyEntity>
-        {
-            new ProductPropertyEntity
+        private static readonly List<ProductPropertyEntity> MockProductPropertyEntities =
+            new List<ProductPropertyEntity>
             {
-                Code = "height", Type = ProductPropertyEntity.PropertyType.Decimal, MinValue = 0, UOM = "M",
-                DefaultValue = 1
-            },
-            new ProductPropertyEntity
-            {
-                Code = "width", Type = ProductPropertyEntity.PropertyType.Decimal, MinValue = 0, UOM = "M",
-                DefaultValue = 1
-            },
-            //new ProductPropertyEntity { Code = "length", Type = ProductPropertyEntity.PropertyType.Decimal, MinValue = 0, UOM = "M" ,DefaultValue = 1} ,
-            new ProductPropertyEntity
-                {Code = "units", Type = ProductPropertyEntity.PropertyType.Int, MinValue = 0, DefaultValue = 1},
-        };
+                new ProductPropertyEntity
+                {
+                    Code = "height", Type = ProductPropertyEntity.PropertyType.Decimal, MinValue = 0, UOM = "M",
+                    DefaultValue = 1
+                },
+                new ProductPropertyEntity
+                {
+                    Code = "width", Type = ProductPropertyEntity.PropertyType.Decimal, MinValue = 0, UOM = "M",
+                    DefaultValue = 1
+                },
+                //new ProductPropertyEntity { Code = "length", Type = ProductPropertyEntity.PropertyType.Decimal, MinValue = 0, UOM = "M" ,DefaultValue = 1} ,
+                new ProductPropertyEntity
+                    {Code = "units", Type = ProductPropertyEntity.PropertyType.Int, MinValue = 0, DefaultValue = 1},
+            };
     }
 }

@@ -27,8 +27,8 @@ namespace Web_Api.Controllers
         //auto-wired by asp startup
         public ProductsController(IProductsService service, IMapper mapper, ILogger<ProductsController> logger)
         {
-            this._service = service;
-            this._mapper = mapper;
+            _service = service;
+            _mapper = mapper;
             _logger = logger;
 
         }

@@ -47,6 +47,15 @@
       },
       "applicationUrl": "http://0.0.0.0:5000"
     },
+
+    "Web_Api-Production-No-Auth": {
+      "commandName": "Project",
+      "launchUrl": "",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "ProductionNoAuth"
+      },
+      "applicationUrl": "http://0.0.0.0:5000"
+    },
     
     "Dev_Local_Sap_Server": {
       "commandName": "Project",

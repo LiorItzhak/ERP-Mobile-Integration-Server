@@ -8,7 +8,6 @@ namespace DataAccessLayer.Repositories
 {
     public interface IProductRepository : IReadOnlyRepository<ProductEntity, string>
     {
-        Task<IEnumerable<ProductEntity>> GetAllActiveItemsForeSellAsync(int page, int size);
 
     }
 }

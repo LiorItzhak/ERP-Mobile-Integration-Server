@@ -126,8 +126,14 @@ namespace DataAccessLayer.SAPHandler.DiApiHandler.SapDbSets
         private static SAPbobsCOM.Activity MapToSapEntity(Activity activity, SAPbobsCOM.Activity sapActivity)
         {
             sapActivity.CardCode = activity.BusinessPartnerCode;
+            // handle by employee for positive, handle by user for negative
             if (activity.HandleByEmployeeCode.HasValue)
-                sapActivity.HandledByEmployee = activity.HandleByEmployeeCode.Value;
+            {
+                if (activity.HandleByEmployeeCode > 0)
+                    sapActivity.HandledByEmployee = activity.HandleByEmployeeCode.Value;
+                else
+                    sapActivity.HandledBy = -activity.HandleByEmployeeCode.Value;
+            }
             sapActivity.Activity = activity.Action switch
             {
                 Activity.ActionType.PhoneCall => BoActivities.cn_Conversation,

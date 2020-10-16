@@ -6,7 +6,7 @@ using DataAccessLayer.Entities.Documents;
 
 namespace DataAccessLayer.Entities.BusinessPartners
 {
-    public class Activity : ICloneable
+    public class Activity : Entity, ICloneable
     {
         [Key]//NONE for SapActivityRep
         public int? Code { get; set; }

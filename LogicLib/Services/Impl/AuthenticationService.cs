@@ -83,7 +83,7 @@ namespace LogicLib.Services.Impl
 
             //check if register by email or by empSn
             var emailValidator = new EmailValidator();
-            if (emailValidator.Validate(userRegistrationRequest.Username.Trim()).IsValid)
+            if ((await emailValidator.ValidateAsync(userRegistrationRequest.Username.Trim())).IsValid)
             {
                 var email = userRegistrationRequest.Username.Trim();
                 //register by email - get employee's Sn
@@ -163,7 +163,7 @@ namespace LogicLib.Services.Impl
             if (!emp.IsActive) throw new InvalidStateException("Employee inactive");
 
 
-            var validationResult = new UserLoginValidator(password, _userManager).Validate(user);
+            var validationResult = await new UserLoginValidator(password, _userManager).ValidateAsync(user);
             if (!validationResult.IsValid)
                 throw new IllegalArgumentException(validationResult.Errors
                     .Select(x => x.ErrorMessage).Aggregate((s1, s2) => $"{s1},{s2}"));
@@ -188,7 +188,7 @@ namespace LogicLib.Services.Impl
 
             var jti = validatedToken.Claims.Single(x => x.Type == JwtRegisteredClaimNames.Jti).Value;
 
-            var validationResult = new RefreshTokenValidator(jti).Validate(storedRefreshToken);
+            var validationResult = await new RefreshTokenValidator(jti).ValidateAsync(storedRefreshToken, cancellationToken);
             if (!validationResult.IsValid)
                 throw new IllegalArgumentException(validationResult.Errors
                     .Select(x => x.ErrorMessage).Aggregate((s1, s2) => $"{s1},{s2}"));
@@ -209,7 +209,7 @@ namespace LogicLib.Services.Impl
         {
             //check if login by email or by empSn
             var emailValidator = new EmailValidator();
-            if (!emailValidator.Validate(usernameOrEmail.Trim()).IsValid)
+            if (!(await emailValidator.ValidateAsync(usernameOrEmail.Trim())).IsValid)
                 return await _userManager.FindByNameAsync(usernameOrEmail);
             //login by email - get employee's Sn
             var email = usernameOrEmail.Trim().ToLower();
@@ -239,6 +239,7 @@ namespace LogicLib.Services.Impl
             };
             if (emp.Email != null)
                 claims.Add(new Claim(JwtRegisteredClaimNames.Email, emp.Email));
+            
             
             //Generate token and refresh token:
             //generate token
@@ -310,9 +311,9 @@ namespace LogicLib.Services.Impl
             }
         }
 
-        private static bool IsJwtWithValidSecurityAlgorithm(SecurityToken vaildatedToken)
+        private static bool IsJwtWithValidSecurityAlgorithm(SecurityToken validatedToken)
         {
-            return (vaildatedToken is JwtSecurityToken jwtSecurityToken) &&
+            return validatedToken is JwtSecurityToken jwtSecurityToken &&
                    jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256,
                        StringComparison.InvariantCultureIgnoreCase);
         }

@@ -22,7 +22,7 @@ using IdentityUser = DataAccessLayer.Entities.Authentication.IdentityUser;
 
 namespace Web_Api.Installers
 {
-    [Profile("Production", "Staging","SapIntegrationTesting")]
+    [Profile("Production","ProductionNoAuth", "Staging","SapIntegrationTesting")]
     public class SapDatabaseInstaller : IServiceInstaller, IConfigurationInstaller
     {
         public void InstallServices(IServiceCollection services, IConfiguration configuration, IWebHostEnvironment env,

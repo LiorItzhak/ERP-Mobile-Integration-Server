@@ -11,9 +11,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataAccessLayer", "DataAcce
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tests", "ApiTest\Tests.csproj", "{73E76AA9-C2A7-41FD-961C-3D5019FBA927}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CrossLayersUtils", "CrossLayersUtils\CrossLayersUtils.csproj", "{C74B9994-E6EA-4EAB-B9EF-CB65165BA17F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CrossLayersUtils", "CrossLayersUtils\CrossLayersUtils.csproj", "{C74B9994-E6EA-4EAB-B9EF-CB65165BA17F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Console", "Console\Console.csproj", "{54CDC1DC-C396-4BCF-A571-1810C67642AD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Console", "Console\Console.csproj", "{54CDC1DC-C396-4BCF-A571-1810C67642AD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

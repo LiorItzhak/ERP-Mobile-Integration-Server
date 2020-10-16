@@ -31,7 +31,7 @@ namespace Web_Api.Controllers
             _logger = logger;
         }
         
-        // GET: api/UserLocation/154645646?toDateTime=1516515616&page=0&size=10&employeeSn=2
+        // GET: api/UserLocation/2020-09-01?toDateTime=2020-09-02&page=0&size=10&employeeSn=2
         [Authorize(Policy =Authorizations.RequireAdminOrManagerRole)]
         [HttpGet("{fromDateTime}")]
         public async Task<IEnumerable<UserLocationDto>> GetWithPagination(
