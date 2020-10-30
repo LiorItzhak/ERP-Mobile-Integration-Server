@@ -8,6 +8,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using DataAccessLayer.Entities.Documents.Headers;
 
 namespace DataAccessLayer.UnitsOfWorks.Ral
@@ -16,10 +17,12 @@ namespace DataAccessLayer.UnitsOfWorks.Ral
     {
         private readonly RalDbContext _dbContext;
 
+
         // private  DbContextOptions<RalDbContext> _options;
 
         public RalUnitOfWork(RalDbContext dbContext)
         {
+
             _dbContext = dbContext;
             BusinessPartners = new BusinessPartnerRepository(dbContext);
             Company = new CompanyRepository(dbContext);
@@ -87,7 +90,6 @@ namespace DataAccessLayer.UnitsOfWorks.Ral
         public void Dispose()
         {
             Console.WriteLine("RalDbContext Disposed");
-            _dbContext.Dispose();
         }
     }
 }

@@ -48,6 +48,6 @@ namespace DataAccessLayer.Entities.Documents.Headers
         public decimal? GrossProfit { get; set; }
         [Column(TypeName = "decimal(10,3)")]
         public decimal? Vat { get; set; }
-
+        public int? AttachmentsCode { get; set; }
     }
 }

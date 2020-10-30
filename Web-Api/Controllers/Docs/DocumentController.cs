@@ -17,6 +17,7 @@ using Web_Api.DTOs.Documents;
 
 namespace Web_Api.Controllers.Docs
 {
+    [OferInterceptor]
     public abstract class DocumentController<TDocumentDto, TDocument, TDocumentHeader> : ControllerBase
         where TDocumentDto : DocumentDto
         where TDocumentHeader : DocumentHeaderEntity

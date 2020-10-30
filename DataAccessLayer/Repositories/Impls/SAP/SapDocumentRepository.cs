@@ -282,7 +282,8 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                 Vat = x.VatSum,
                 TotalDiscountAndRounding = x.DiscSum,
                 ToPay = x.DocTotal - x.PaidToDate,
-                GrossProfit = x.GrosProfit
+                GrossProfit = x.GrosProfit,
+                AttachmentsCode = x.AtcEntry
             };
 
 
@@ -327,7 +328,8 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                 Vat = x.VatSum,
                 TotalDiscountAndRounding = x.DiscSum,
                 ToPay = x.DocTotal - x.PaidToDate,
-                GrossProfit = x.GrosProfit
+                GrossProfit = x.GrosProfit,
+                AttachmentsCode = x.AtcEntry
             };
 
         private static readonly Expression<Func<ODLN, DeliveryNoteEntity>> AsDeliveryNoteHeaderEntity =
@@ -369,7 +371,8 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                 Vat = x.VatSum,
                 TotalDiscountAndRounding = x.DiscSum,
                 ToPay = x.DocTotal - x.PaidToDate,
-                GrossProfit = x.GrosProfit
+                GrossProfit = x.GrosProfit,
+                AttachmentsCode = x.AtcEntry
             };
 
         private static readonly Expression<Func<OINV, InvoiceEntity>> AsInvoiceHeaderEntity =
@@ -411,7 +414,8 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                 Vat = x.VatSum,
                 TotalDiscountAndRounding = x.DiscSum,
                 ToPay = x.DocTotal - x.PaidToDate,
-                GrossProfit = x.GrosProfit
+                GrossProfit = x.GrosProfit,
+                AttachmentsCode = x.AtcEntry
             };
 
         private static readonly Expression<Func<ORIN, CreditNoteEntity>> AsCreditNoteHeaderEntity =
@@ -452,7 +456,8 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                 Vat = x.VatSum,
                 TotalDiscountAndRounding = x.DiscSum,
                 ToPay = x.DocTotal - x.PaidToDate,
-                GrossProfit = x.GrosProfit
+                GrossProfit = x.GrosProfit,
+                AttachmentsCode = x.AtcEntry
             };
 
         private static readonly Expression<Func<ODPI, DownPaymentRequest>> AsDownPaymentRequestHeader =
@@ -497,7 +502,8 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                 Vat = q.VatSum,
                 TotalDiscountAndRounding = q.DiscSum,
                 ToPay = q.DocTotal - q.PaidToDate,
-                GrossProfit = q.GrosProfit
+                GrossProfit = q.GrosProfit,
+                AttachmentsCode = q.AtcEntry
             };
 
 

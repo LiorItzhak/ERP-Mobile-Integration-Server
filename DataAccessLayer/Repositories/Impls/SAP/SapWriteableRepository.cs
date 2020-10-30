@@ -11,6 +11,7 @@ namespace DataAccessLayer.Repositories.Impls.SAP
     {
         protected readonly DiSet<TEntity,Id> DiSet;
 
+        // ReSharper disable once PublicConstructorInAbstractClass
         public SapWriteableRepository(IQueryable<TEntity> selectEntityQuery, Expression<Func<TEntity, Id>> selectId,DiSet<TEntity,Id> diSet) :base(selectEntityQuery,selectId)
         {
             DiSet = diSet;
@@ -23,9 +24,9 @@ namespace DataAccessLayer.Repositories.Impls.SAP
             return Task.Run(() => DiSet.Add(entity));
         }
 
-        public Task<List<TEntity>> AddAsync(List<TEntity> customers)
+        public Task<List<TEntity>> AddAsync(List<TEntity> entities)
         {
-            return Task.Run(() => customers.Select(x => DiSet.Add(x)).ToList());
+            return Task.Run(() => entities.Select(x => DiSet.Add(x)).ToList());
         }
 
         public Task<TEntity> UpdateAsync(TEntity entity)

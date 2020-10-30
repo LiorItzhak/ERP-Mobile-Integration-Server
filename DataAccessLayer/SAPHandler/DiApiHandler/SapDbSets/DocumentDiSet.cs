@@ -224,6 +224,9 @@ namespace DataAccessLayer.SAPHandler.DiApiHandler.SapDbSets
             if (document.VatPercent != null)
                 sapDocument.VatPercent = Convert.ToDouble(document.VatPercent);
 
+            if (document.AttachmentsCode.HasValue)
+                sapDocument.AttachmentEntry = document.AttachmentsCode.Value;
+
             if (document.Items == null) return sapDocument;
            
             var newAdd = 0;
@@ -392,6 +395,8 @@ namespace DataAccessLayer.SAPHandler.DiApiHandler.SapDbSets
                 VatPercent = Convert.ToDecimal(sapDoc.VatPercent),
                 Vat = Convert.ToDecimal(sapDoc.VatSum),
                 TotalDiscountAndRounding = Convert.ToDecimal(sapDoc.TotalDiscount),
+                AttachmentsCode = sapDoc.AttachmentEntry
+   
             };
 
             if (_curDocType == _quotationType)

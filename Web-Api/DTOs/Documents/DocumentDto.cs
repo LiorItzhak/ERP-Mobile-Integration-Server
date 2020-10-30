@@ -32,7 +32,7 @@ namespace Web_Api.DTOs.Documents
         public decimal? DocTotal { get; set; }
         public decimal? TotalDiscountAndRounding { get; set; }
         public decimal? Vat { get; set; }
-
+        public int? AttachmentsCode { get; set; }
         public decimal? ToPay { get; set; }
         public decimal? GrossProfit { get; set; }
 

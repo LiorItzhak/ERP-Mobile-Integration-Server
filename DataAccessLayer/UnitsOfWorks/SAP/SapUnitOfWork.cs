@@ -2,6 +2,7 @@
 using System;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Transactions;
 using DataAccessLayer.Repositories;
 
 using DataAccessLayer.SAPHandler.SqlHandler.Models;
@@ -28,9 +29,8 @@ namespace DataAccessLayer.UnitsOfWorks.SAP
        private readonly RalDbContext _extrasDbContext;
        public static IServiceProvider CurrentProvider;
        private readonly SapContextOptions _options;
-
        public SapUnitOfWork(SapContextOptions options)
-        {
+       {
             //this.InjectInstanceOf(typeof(IRepository), sapSqlDbContext, diApiContext);
             //this.InjectInstanceOf(typeof(IRepository), sapSqlDbContext, diApiContext, options.SqlServerConnection, new DemoItemPropertiesRepository());
             var productPropertiesRepository = new DemoProductPropertiesRepository();

@@ -16,6 +16,7 @@ namespace Web_Api.Controllers
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
+    [OferInterceptor]
     public class EmployeeController : ControllerBase
     {
 

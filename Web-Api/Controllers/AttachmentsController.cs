@@ -16,7 +16,8 @@ namespace Web_Api.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
-    public class AttachmentsController: ControllerBase
+    [OferInterceptor]
+    public class AttachmentsController : ControllerBase
     {
         private readonly ILogger<AttachmentsController> _logger;
         private readonly IAttachmentsService _service;
@@ -28,27 +29,33 @@ namespace Web_Api.Controllers
             _logger = logger;
             _mapper = mapper;
         }
-        
-        
+
+
         // GET: api/Attachments/5/1
         [HttpGet("{attachmentsCode}")]
-        public async Task<List<AttachmentDto>> Get([FromRoute] int attachmentsCode,[FromQuery]string createdAfterDate = null)
+        public async Task<List<AttachmentDto>> Get([FromRoute] int attachmentsCode,
+            [FromQuery] string createdAfterDate = null)
         {
-            return  (await _service.GetAttachments(attachmentsCode, _mapper.Map<DateTime?>(createdAfterDate)))
+            return (await _service.GetAttachments(attachmentsCode, _mapper.Map<DateTime?>(createdAfterDate)))
                 .Select(x => _mapper.Map<AttachmentDto>(x)).ToList();
         }
+
         // GET: api/Attachments/5/1
         [HttpGet("{attachmentsCode}/{num}")]
-        public async Task<AttachmentDto> Get([FromRoute] int attachmentsCode,[FromRoute] int num)
+        public async Task<AttachmentDto> Get([FromRoute] int attachmentsCode, [FromRoute] int num)
         {
-            return _mapper.Map<AttachmentDto>(await _service.GetByKeyAsync(attachmentsCode,num));
+            return _mapper.Map<AttachmentDto>(await _service.GetByKeyAsync(attachmentsCode, num));
         }
-        
-        // GET: api/Attachments?attachmentsCode=3888
-        [HttpPost, DisableRequestSizeLimit]
-        public async Task<IEnumerable<AttachmentDto>> Post([FromForm] List<IFormFile> files,[FromQuery] int? attachmentsCode = null,CancellationToken cancellationToken = default)
+
+
+
+
+        [HttpPost("{objectType}/{objectKey}"), DisableRequestSizeLimit]
+        public async Task<IEnumerable<AttachmentDto>> PostAttachmentsFiles(
+            [FromRoute] string objectType, [FromRoute] string objectKey,
+            [FromForm] List<IFormFile> files, CancellationToken cancellationToken = default)
         {
-            var filesContainers =files.Select(x => new FileContainer
+            var filesContainers = files.Select(x => new FileContainer
                 {
                     FileStream = x.OpenReadStream(),
                     Name = x.FileName,
@@ -57,27 +64,11 @@ namespace Web_Api.Controllers
                     ContentType = x.ContentType,
                 }
             );
-            var attachments= await _service.CreateNewAttachments(filesContainers,attachmentsCode,cancellationToken);
+
+            var attachments = await _service
+                .SaveNewAttachments(_mapper.Map<IAttachmentsService.ObjectType>(objectType),
+                    objectKey, filesContainers, cancellationToken);
             return attachments.Select(x => _mapper.Map<AttachmentDto>(x));
         }
-
-
-        
-        // [HttpPost("Attachments"), DisableRequestSizeLimit]
-        // public async Task<IEnumerable<AttachmentDto>> PostAttachment([FromForm] List<IFormFile> files)
-        // {
-        //     var filesContainers =files.Select(x => new FileContainer
-        //         {
-        //             FileStream = x.OpenReadStream(),
-        //             Name = x.FileName,
-        //             ContentDisposition = x.ContentDisposition,
-        //             Length = x.Length,
-        //             ContentType = x.ContentType,
-        //         }
-        //     );
-        //     var attachments = await _fileService.PostAttachmentsAsync(filesContainers);
-        //     return attachments.Select(x => _mapper.Map<AttachmentDto>(x));
-        // }
-
     }
 }

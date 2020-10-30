@@ -16,6 +16,8 @@ namespace Web_Api.Controllers
     [Authorize]
     [Route("api/[controller]")]
     [ApiController]
+    [OferInterceptor]
+
     public class ActionController : ControllerBase
     {
         private readonly ILogger<ActionController> _logger;

@@ -15,6 +15,7 @@ namespace Web_Api.Controllers.BusinessPartners
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
+    [OferInterceptor]
     public class ActivityController : ControllerBase
     {
         private readonly IActivityService _service;

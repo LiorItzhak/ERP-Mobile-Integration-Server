@@ -13,6 +13,7 @@ namespace Web_Api.Controllers.Docs
     [Route("api/[controller]")]
     [Authorize]
     [ApiController]
+    
     public class DownPaymentRequestsController : DocumentController<DownPaymentRequestDto, DownPaymentRequest,
         DownPaymentRequestHeader>
     {
