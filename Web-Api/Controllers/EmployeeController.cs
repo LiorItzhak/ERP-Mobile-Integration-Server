@@ -35,7 +35,7 @@ namespace Web_Api.Controllers
         public async Task<IEnumerable<EmployeeDto>> GetPage([FromQuery]int page = 0, [FromQuery]int size=10, [FromQuery] string modifiedAfter = null)
         {
             var emps = (await _employeeService.GetEmployeesPageAsync(page, size,_mapper.Map<DateTime?>(modifiedAfter) )).ToList();
-            emps.ForEach(x => x.PicPath = this.MapLocalPathToUri(x.PicPath));
+            emps.ForEach(x => x.PicPath = this.BitmapMapLocalPathToUri(x.PicPath));
             return emps.Select(entity => _mapper.Map<EmployeeDto>(entity));
 
 
@@ -46,7 +46,7 @@ namespace Web_Api.Controllers
         public async Task<EmployeeDto> Get([FromRoute]int sn)
         {
             var emp = await _employeeService.FindEmployeeBySnAsync(sn);
-            emp.PicPath = this.MapLocalPathToUri(emp.PicPath);
+            emp.PicPath = this.BitmapMapLocalPathToUri(emp.PicPath);
 
             return _mapper.Map<EmployeeDto>(emp);
         }

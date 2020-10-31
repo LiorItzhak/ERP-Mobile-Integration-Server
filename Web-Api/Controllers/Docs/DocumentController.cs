@@ -38,32 +38,26 @@ namespace Web_Api.Controllers.Docs
         }
 
 
-        // GET: api/{DocumentName}/All/{cid}?datetime=14500000
-        [HttpGet("all/{cid}")]
-        public async Task<IEnumerable<TDocumentDto>> GetAll([FromRoute] string cid, [FromQuery] string updatedAfter = null)
+        [HttpGet]
+        public async Task<IEnumerable<TDocumentDto>> GetPage(
+            [FromQuery] int page = 0,
+            [FromQuery] int size = 10,
+            [FromQuery] string businessPartnerKey = null,
+            [FromQuery] string salesmanKey = null,
+            [FromQuery] bool? isOpen = null,
+            [FromQuery] string modifiedAfter = null)
         {
-            _logger.LogDebug(
-                $"Get all {typeof(TDocument).Name} for customer =  {cid} , updatedAfter = {_mapper.Map<DateTime?>(updatedAfter)}");
-            var temp = await _service.GetAllUpdatedAfterAsync(cid, _mapper.Map<DateTime?>(updatedAfter));
-            return temp
-                .Select(entity => _mapper.Map<TDocumentDto>(entity));
+           
+            var r = await _service.GetPageAsync(
+                businessPartnerKey,
+                salesmanKey != null ? Convert.ToInt32(salesmanKey)  : new int?(),
+                isOpen,
+                _mapper.Map<DateTime?>(modifiedAfter),
+                page,size);
+            return r.Select(entity => _mapper.Map<TDocumentDto>(entity));
         }
 
-
-        // GET: api/{DocumentName}/BySalesman/{salesmanCode}?datetime=14500000&isOpen=true
-        [HttpGet("BySalesman/{salesmanCode}")]
-        public async Task<IEnumerable<TDocumentDto>> GetAll(
-            [FromRoute] int salesmanCode,
-            [FromQuery] bool? isOpen = null, 
-            [FromQuery] string updatedAfter = null)
-        {
-            _logger.LogDebug(
-                $"Get all {typeof(TDocument).Name} for salesman =  {salesmanCode} , updatedAfter = {_mapper.Map<DateTime?>(updatedAfter)}");
-            var temp =( await _service.GetAllBySalesmanAsync(salesmanCode, isOpen, _mapper.Map<DateTime?>(updatedAfter))).ToList();
-            _logger.LogDebug($"return {temp.Count()} objects");
-            return temp
-                .Select(entity => _mapper.Map<TDocumentDto>(entity));
-        }
+        
 
         // GET: api/{DocumentName}/{docKey}
         [HttpGet("{docKey:int}")]
@@ -142,8 +136,5 @@ namespace Web_Api.Controllers.Docs
                 throw;
             }
         }
-
-
-
     }
 }

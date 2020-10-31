@@ -70,5 +70,29 @@ namespace Web_Api.Controllers
                     objectKey, filesContainers, cancellationToken);
             return attachments.Select(x => _mapper.Map<AttachmentDto>(x));
         }
+        
+        
+        
+        [HttpPost("{attachmentsCode}"), DisableRequestSizeLimit]
+        public async Task<IEnumerable<AttachmentDto>> AddAttachmentsFiles(
+            [FromRoute] int attachmentsCode, [FromForm] List<IFormFile> files,
+            CancellationToken cancellationToken = default)
+        {
+            var filesContainers = files.Select(x => new FileContainer
+                {
+                    FileStream = x.OpenReadStream(),
+                    Name = x.FileName,
+                    ContentDisposition = x.ContentDisposition,
+                    Length = x.Length,
+                    ContentType = x.ContentType,
+                }
+            );
+
+            var attachments = await _service
+                .AddAttachments(attachmentsCode, filesContainers, cancellationToken);
+            return attachments.Select(x => _mapper.Map<AttachmentDto>(x));
+        }
     }
+    
+    
 }

@@ -15,6 +15,7 @@ namespace DataAccessLayer.Repositories
 
         Task<TDocument> UpdateAsync(TDocument document);
 
+
         Task<TDocument> AddAsync(TDocument document);
 
         Task<TDocument> CancelAsync(int docKey);
@@ -23,12 +24,5 @@ namespace DataAccessLayer.Repositories
         
         Task<IEnumerable<DocumentsSummery>> SumMonthlyAsync(Expression<Func<TDocumentHeader, bool>> predicate = null);
         
-        Task<IEnumerable<DocumentsSummery>> SumYearlyAsync(Expression<Func<TDocumentHeader, bool>> predicate= null);
-        
-        Task<IEnumerable<DocumentsSummery>> SumDailyAsync(Expression<Func<TDocumentHeader, bool>> predicate= null);
-
-        Task CreatePdf(int docKey);
-
-
     }
 }

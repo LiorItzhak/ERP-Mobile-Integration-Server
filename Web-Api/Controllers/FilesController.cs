@@ -73,22 +73,7 @@ namespace Web_Api.Controllers
                 contentType = "application/octet-stream";
             return File(fileData, contentType);
         }
-
-
-        [HttpGet("Attachments/{fileName}")]
-        [Obsolete]
-        public async Task<FileStreamResult> GetAttachment([FromRoute] string fileName)
-        {
-            var fileData = await _fileService.GetFileAsync(fileName);
-            if (!_contentTypeProvider.TryGetContentType(fileName, out var contentType))
-                contentType = "application/octet-stream";
-            return File(fileData, contentType);
-        }
-
-        // GET: api/Files/FromLocal/file.jpg
-        [HttpGet("FromLocal/{fileName}")]
-        [Obsolete]
-        public async Task<IActionResult> GetProductPicture([FromRoute] string fileName) => await GetBitmap(fileName);
+        
 
 
         [HttpGet("Pdf/{objectKey}")]

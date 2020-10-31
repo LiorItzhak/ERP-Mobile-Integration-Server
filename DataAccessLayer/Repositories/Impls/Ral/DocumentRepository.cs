@@ -50,6 +50,8 @@ namespace DataAccessLayer.Repositories.Impls.Ral
             return SelectDocumentFromDb(_dbContext).Update(doc).Entity;
         }
 
+
+
         public async Task<TDocument> AddAsync(TDocument document)
         {
             document.Sn = Guid.NewGuid().GetHashCode();
@@ -63,9 +65,7 @@ namespace DataAccessLayer.Repositories.Impls.Ral
 
 
 
-#pragma warning disable CS1998 // Warning suppressed from here
         public async Task<TDocument> UpdateAsync(TDocument document)
-#pragma warning restore CS1998 // Warning recognized from here
         {
             document.LastUpdateDateTime = DateTime.Now;
 
@@ -79,6 +79,7 @@ namespace DataAccessLayer.Repositories.Impls.Ral
             document.Items.RemoveAll(x => x.Quantity == 0);
             return SelectDocumentFromDb(_dbContext).Update(document).Entity;
         }
+
 
         
         public Task<IEnumerable<DocumentsSummery>> SumMonthlyAsync(Expression<Func<TDocumentHeader, bool>> predicate = null)

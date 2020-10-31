@@ -83,25 +83,23 @@ namespace DataAccessLayer.Repositories.Impls.SAP
 
             //get the properties of the items
 
-            using (var cnn = new SqlConnection(_connectionString))
+            await using var cnn = new SqlConnection(_connectionString);
+            var sqlCmd = $"Select * from {GetDocItemsTableName()} where DocEntry = @docEntry";
+            cnn.Open();
+            var command = new SqlCommand(sqlCmd, cnn);
+            command.Parameters.AddWithValue("@docEntry", doc.Key.Value);
+            var dataReader = await command.ExecuteReaderAsync();
+
+            while (dataReader.Read())
             {
-                var sqlCmd = $"Select * from {GetDocItemsTableName()} where DocEntry = @docEntry";
-                cnn.Open();
-                var command = new SqlCommand(sqlCmd, cnn);
-                command.Parameters.AddWithValue("@docEntry", doc.Key.Value);
-                var dataReader = command.ExecuteReader();
-
-                while (dataReader.Read())
-                {
-                    doc.Items
-                            .Single(i => i.ItemNumber == (int) dataReader["LineNum"]).Properties =
-                        itemProperties[(int) dataReader["LineNum"]]
-                            .ToDictionary(p => p.Value, p => dataReader[p.Key]);
-                }
-
-                dataReader.Close();
-                command.Dispose();
+                doc.Items
+                        .Single(i => i.ItemNumber == (int) dataReader["LineNum"]).Properties =
+                    itemProperties[(int) dataReader["LineNum"]]
+                        .ToDictionary(p => p.Value, p => dataReader[p.Key]);
             }
+
+            await dataReader.CloseAsync();
+            command.Dispose();
 
             return doc;
         }
@@ -128,28 +126,7 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                 }).ToListAsync();
         }
 
-        public Task<IEnumerable<DocumentsSummery>> SumYearlyAsync(Expression<Func<TDocumentHeader, bool>> predicate)
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task<IEnumerable<DocumentsSummery>> SumDailyAsync(Expression<Func<TDocumentHeader, bool>> predicate)
-        {
-            throw new NotImplementedException();
-        }
-
-        public async Task CreatePdf(int docKey)
-        {
-            await Task.Run(() => GetDiSet(_docType).CreatePdf(docKey));
-        }
-
-
-        private static readonly Expression<Func<TDocumentHeader, DocumentsSummery>> AsDocumentsSummery =
-            x => new DocumentsSummery
-            {
-            };
-
-
+        
         private IDocumentDiSet<TDocument> GetDiSet(Type entityType = null)
         {
             var docType = entityType != null ? entityType : _docType;
@@ -312,7 +289,6 @@ namespace DataAccessLayer.Repositories.Impls.SAP
                     .AddMinutes(( x.UpdateTS.Value / 100) % 100)
                     .AddHours(( x.UpdateTS.Value / 10000) % 10000) : x.UpdateDate,
                 
-      
                 ClosingDate = x.ClsDate,
                 SupplyDate = x.DocDueDate,
 

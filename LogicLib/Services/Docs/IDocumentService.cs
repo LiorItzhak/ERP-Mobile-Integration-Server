@@ -10,7 +10,14 @@ namespace LogicLib.Services.Docs
 {
     public interface IDocumentService<TDocument, TDocumentHeader> where TDocumentHeader : DocumentHeaderEntity where TDocument : TDocumentHeader, IDocumentEntity
     {
-        Task<IEnumerable<TDocumentHeader>> GetAllUpdatedAfterAsync(string cid, DateTime? modifiedAfter);
+        Task<IEnumerable<TDocumentHeader>> GetPageAsync(
+            string businessPartnerKey = null,
+             int? salesmanKey = null,
+             bool? isOpen = null,
+             DateTime? modifiedAfter = null,
+             int page = 0,
+             int size = 10);
+        
 
         Task<TDocument> GetByDocKeyAsync(int key);
         
@@ -21,7 +28,6 @@ namespace LogicLib.Services.Docs
 
         Task<TDocument> UpdateDocument(TDocument document, CancellationToken cancellationToken);
 
-        Task<IEnumerable<TDocumentHeader>> GetAllBySalesmanAsync(int salesmanCode,bool? isOpen, DateTime? modifiedAfter = null);
         
         
         Task<IEnumerable<DocumentsSummery>> SumAsync(SumType type, DateTime fromDate , DateTime toDate,int? salesmanCode = null ,bool? isClosed = null);

@@ -15,7 +15,7 @@ namespace DataAccessLayer.SAPHandler.DiApiHandler.SapDbSets
     }
     public abstract class DiSet<TEntity,Id> : IDiSet<TEntity>
     {
-        protected CompanyContext Context;
+        protected readonly CompanyContext Context;
         protected DiSet(CompanyContext context)
         {
             Context = context;

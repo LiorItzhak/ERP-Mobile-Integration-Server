@@ -10,7 +10,7 @@ namespace LogicLib.Services
     {
         enum ObjectType
         {
-            BusinessPartner,Order,Quotation
+            BusinessPartner,Invoice, Order, Quotation, CreditNote, DeliveryNote, DownPaymentRequest
         }
         Task<Attachment> GetByKeyAsync(int attachmentsCode, int num);
         
@@ -18,6 +18,10 @@ namespace LogicLib.Services
         
         Task<IEnumerable<Attachment>> SaveNewAttachments(
             ObjectType objectType, string objectKey,
+            IEnumerable<FileContainer> files,CancellationToken cancellationToken = default);
+        
+        Task<IEnumerable<Attachment>> AddAttachments(
+            int attachmentsCode,
             IEnumerable<FileContainer> files,CancellationToken cancellationToken = default);
 
 

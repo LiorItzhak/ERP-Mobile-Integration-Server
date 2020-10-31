@@ -41,7 +41,7 @@ namespace Web_Api.Controllers
             var updatedAfterDateTime = _mapper.Map<DateTime?>(updatedAfter);
             _logger.LogDebug($"Get All Products updated after {updatedAfterDateTime} page = {page} size = {size}");
             var products = (await _service.GetProductsPageAsync(page,size,updatedAfterDateTime)).ToList();
-            products.ForEach(x => x.PictureUrl = this.MapLocalPathToUri(x.PictureUrl));
+            products.ForEach(x => x.PictureUrl = this.BitmapMapLocalPathToUri(x.PictureUrl));
             _logger.LogDebug($"returns {products.Count()} objects");
             return products.Select(x=> _mapper.Map<ProductDto>(x));
         }
@@ -52,7 +52,7 @@ namespace Web_Api.Controllers
         {
             _logger.LogDebug($"Get All Product with code {code}");
             var product = await _service.GetProductAsync(code);
-            product.PictureUrl = this.MapLocalPathToUri(product.PictureUrl);
+            product.PictureUrl = this.BitmapMapLocalPathToUri(product.PictureUrl);
             return _mapper.Map<ProductDto>(product);
         }
 
@@ -64,7 +64,7 @@ namespace Web_Api.Controllers
 
             _logger.LogDebug($"Get All Product Categories updated after {updatedAfterDateTime} page = {page} size = {size}");
             var productsGroups = (await _service.GetProductGroupsPageAsync(page, size, updatedAfterDateTime)).ToList();
-            productsGroups.ForEach(x => x.PictureUrl = this.MapLocalPathToUri(x.PictureUrl));
+            productsGroups.ForEach(x => x.PictureUrl = this.BitmapMapLocalPathToUri(x.PictureUrl));
 
             _logger.LogDebug($"returns {productsGroups.Count()} objects");
 
@@ -78,7 +78,7 @@ namespace Web_Api.Controllers
             _logger.LogDebug($"Get All Product's Group with code {code}");
 
             var productGroup = await _service.GetProductGroupAsync(code);
-            productGroup.PictureUrl = this.MapLocalPathToUri(productGroup.PictureUrl);
+            productGroup.PictureUrl = this.BitmapMapLocalPathToUri(productGroup.PictureUrl);
 
             return _mapper.Map<ProductGroupDto>(productGroup);
         }

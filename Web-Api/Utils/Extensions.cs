@@ -10,24 +10,23 @@ namespace Web_Api.Utils
     public static class Extensions
     {
 
-        public static string MapLocalPathToUri(this ControllerBase controller,string localPath)
+        public static string BitmapMapLocalPathToUri(this ControllerBase controller,string localPath)
         {
-            if (!String.IsNullOrEmpty(localPath) && !isValidUri(localPath))
+            if (!string.IsNullOrEmpty(localPath) && !IsValidUri(localPath))
             {
-                string fileName = localPath.Contains(@":") || localPath.Contains(@"\\") ? Path.GetFileName(localPath) : localPath;
-                string uri = $@"{controller.Request.Scheme}://{controller.Request.Host.ToUriComponent()}/api/Files/FromLocal/{fileName}";
+                var fileName = localPath.Contains(@":") || localPath.Contains(@"\\") ? Path.GetFileName(localPath) : localPath;
+                var uri = $@"{controller.Request.Scheme}://{controller.Request.Host.ToUriComponent()}/api/Files/Bitmap/{fileName}";
                 return uri;
             }
             else
                 return localPath;
         }
 
-        static private bool isValidUri(string uriToCheck)
+        private static bool IsValidUri(string uriToCheck)
         {
             if (!Uri.IsWellFormedUriString(uriToCheck, UriKind.Absolute))
                 return false;
-            Uri tmp;
-            if (!Uri.TryCreate(uriToCheck, UriKind.Absolute, out tmp))
+            if (!Uri.TryCreate(uriToCheck, UriKind.Absolute, out var tmp))
                 return false;
             return tmp.Scheme == Uri.UriSchemeHttp || tmp.Scheme == Uri.UriSchemeHttps;
         }

@@ -48,19 +48,7 @@ namespace LogicLib.Services.Impl.Docs
             await transaction.CompleteAsync(cancellationToken);
             return addedDoc;
         }
-
-        public async Task<IEnumerable<TDocumentHeader>> GetAllBySalesmanAsync(int salesmanCode, bool? isOpen,
-            DateTime? modifiedAfter = null)
-        {
-            using var transaction = DalService.CreateUnitOfWork();
-            return await GetRepository(transaction)
-                .FindAllAsync(predicate: d => d.SalesmanSn == salesmanCode &&
-                                              (isOpen.HasValue && d.IsClosed == !isOpen.Value ||
-                                               !isOpen.HasValue) &&
-                                              (!modifiedAfter.HasValue ||
-                                               ( d.LastUpdateDateTime ?? d.CreationDateTime )> modifiedAfter),
-            PageRequest.Of(0, int.MaxValue));
-        }
+        
 
         public async Task<IEnumerable<DocumentsSummery>> SumAsync(SumType type, DateTime fromDate, DateTime toDate,
             int? salesmanCode = null, bool? isClosed = null)
@@ -94,13 +82,21 @@ namespace LogicLib.Services.Impl.Docs
             return await GetRepository(transaction).SumMonthlyAsync(predicate);
         }
 
-        public async Task<IEnumerable<TDocumentHeader>> GetAllUpdatedAfterAsync(string cid, DateTime? modifiedAfter)
+
+
+        public async Task<IEnumerable<TDocumentHeader>> GetPageAsync(string businessPartnerKey = null,
+            int? salesmanKey = null, bool? isOpen = null,
+            DateTime? modifiedAfter = null, int page = 0, int size = 10)
         {
             using var transaction = DalService.CreateUnitOfWork();
-            var docs =  await GetRepository(transaction)
-                .FindAllAsync(
-                    predicate: d => d.CustomerSn == cid &&  (modifiedAfter.HasValue == false || (d.LastUpdateDateTime ?? d.CreationDateTime )> modifiedAfter),
-                    PageRequest.Of(0, int.MaxValue, Sort<TDocumentHeader>.By(x => x.Sn)));
+            var docs = await GetRepository(transaction).FindAllAsync(
+                d =>
+                    (businessPartnerKey != null && d.CustomerSn == businessPartnerKey) ||
+                    (salesmanKey != null && d.SalesmanSn == salesmanKey) ||
+                    (isOpen.HasValue && d.IsClosed != isOpen.Value) ||
+                    (modifiedAfter.HasValue && (d.LastUpdateDateTime ?? d.CreationDateTime) > modifiedAfter),
+                PageRequest.Of(page, size, Sort<TDocumentHeader>.By(x => x.Sn)));
+
             return docs;
         }
 
@@ -108,13 +104,13 @@ namespace LogicLib.Services.Impl.Docs
         {
             using var transaction = DalService.CreateUnitOfWork();
             var doc = await GetRepository(transaction).FindByIdWithItemsAsync(key);
-            if(doc == null) throw new NotFoundException($"Document with key:{key} don't exist");
+            if (doc == null) throw new NotFoundException($"Document with key:{key} don't exist");
             return doc;
         }
 
         public async Task<TDocument> UpdateDocument(TDocument document, CancellationToken cancellationToken)
         {
-            if(!document.Key.HasValue) throw new InvalidStateException("Can't update document without a key");
+            if (!document.Key.HasValue) throw new InvalidStateException("Can't update document without a key");
             using var transaction = DalService.CreateUnitOfWork();
             document.CreationDateTime = null; //determine by ERP 
             document.DocTotal = null; //determine by ERP 
